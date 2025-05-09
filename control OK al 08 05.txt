@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #61BCC1;
+      padding-bottom: 60px;
+    }
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background-color: #61BCC1;
+      padding: 15px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 20px 20px;
+    }
+    .cart-button {
+      position: fixed;
+      top: 15px;
+      right: 20px;
+      z-index: 1001;
+    }
+    #product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+    .product-item {
+      display: flex;
+      align-items: center;
+      background: white;
+      padding: 12px 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      gap: 12px;
+    }
+    .product-image {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+    .product-info {
+      flex-grow: 1;
+      min-width: 0;
+    }
+    .product-name {
+      font-weight: bold;
+      color: #242A0E;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .product-category {
+      font-size: 12px;
+      color: #61BCC1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .product-price {
+      font-weight: bold;
+      color: #54c12b;
+      margin: 0 10px;
+      white-space: nowrap;
+    }
+    .add-button {
+      background: #D6BA10;
+      color: #242A0E;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .low-stock {
+      font-size: 10px;
+      background: #ff9800;
+      color: white;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-left: 5px;
+    }
+    #cart {
+      position: fixed;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      border: 2px solid #61BCC1;
+      padding: 25px;
+      border-radius: 12px;
+      z-index: 1000;
+      max-width: 500px;
+      width: 90%;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+      display: none;
+    }
+    .cart-item-image {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    .error-input {
+      border: 2px solid red !important;
+      animation: shake 0.5s;
+    }
+    .floating-mobile-button {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #D6BA10;
+      color: #242A0E;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1001;
+    }
+    /* Modales */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 0;
+      width: 100%;
+      height: auto;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 2000;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 20px;
+      overflow-y: auto;
+    }
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+    }
+    .modal-title {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #242A0E;
+      text-align: center;
+    }
+    .modal-input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #61BCC1;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    .modal-button {
+      width: 100%;
+      padding: 12px;
+      background-color: #D6BA10;
+      color: #242A0E;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .modal-button.secondary {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    .sale-summary {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+    }
+    .sale-summary p {
+      margin: 5px 0;
+    }
+    .sale-summary .profit {
+      font-weight: bold;
+      color: #54c12b;
+      font-size: 18px;
+    }
+    #saleResult .ok-button {
+      width: 100%;
+      padding: 10px;
+      background-color: #54c12b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding-top: 130px;
+      }
+      .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 10px 15px;
+        z-index: 1000;
+      }
+      .cart-button {
+        position: fixed;
+        top: 10px;
+        right: 15px;
+        z-index: 1001;
+        display: block !important;
+      }
+      .cart-button button {
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+        gap: 5px !important;
+      }
+      .product-item {
+        padding: 10px 12px;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .product-image {
+        width: 50px;
+        height: 50px;
+      }
+      .product-info {
+        flex: 1;
+        min-width: calc(100% - 130px);
+      }
+      .product-name {
+        font-size: 14px;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+      }
+      .product-category {
+        font-size: 11px;
+      }
+      .product-category::after {
+        content: " • Q" attr(data-price);
+        color: #54c12b;
+        font-weight: bold;
+      }
+      .product-price {
+        display: none;
+      }
+      .add-button {
+        padding: 6px 10px;
+        font-size: 13px;
+        margin-left: auto;
+      }
+      #cart {
+        top: 50%;
+        transform: translate(-50%, -50%);
+        max-height: 80vh;
+      }
+      .floating-mobile-button {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Modal de contraseña -->
+<div id="passwordModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">🔒 Acceso administrativo</div>
+    <input type="password" id="passwordInput" class="modal-input" placeholder="Ingrese la contraseña">
+    <button onclick="checkPassword()" class="modal-button">Ingresar</button>
+    <div id="passwordError" style="color:red; text-align:center; margin-top:10px; display:none;">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- Modal de registro de venta -->
+<div id="saleModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">💰 Registrar Venta</div>
+    <input type="number" id="salePrice" class="modal-input" placeholder="Precio de venta total (Q)">
+    <input type="number" id="shippingCost" class="modal-input" placeholder="Costo de envío (Q)">
+    <button onclick="registerSale()" class="modal-button">Confirmar Venta</button>
+    <button onclick="closeSaleModal()" class="modal-button secondary">Cancelar</button>
+    
+    <div id="saleResult" class="sale-summary" style="display:none;">
+      <h3 style="text-align:center; margin-bottom:15px;">VENTA REGISTRADA</h3>
+      <p><strong>Productos vendidos:</strong> <span id="soldItems"></span></p>
+      <p><strong>Precio de venta:</strong> Q<span id="displaySalePrice"></span></p>
+      <p><strong>Costo de productos:</strong> Q<span id="displayProductCost"></span></p>
+      <p><strong>Costo de envío:</strong> Q<span id="displayShippingCost"></span></p>
+      <p class="profit">Ganancia estimada: Q<span id="displayProfit"></span></p>
+      <button class="ok-button" onclick="closeSaleModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Barra superior fija -->
+<div class="top-bar">
+  <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; max-width: 1200px; margin: 0 auto;">
+    <input 
+      type="text" 
+      id="search" 
+      placeholder="🔍 Buscar..." 
+      style="flex:1; min-width:200px; padding:12px 15px; font-size:16px; border:1px solid #D6BA10; border-radius:8px; background:#f9f9f9;"
+    >
+    <select id="filtro-categoria" style="flex:0.5; min-width:180px; padding:12px 15px; font-size:16px; border:1px solid #D6BA10; border-radius:8px; background:#f9f9f9; color:#242A0E;">
+      <option value="">Todas las categorías</option>
+    </select>
+  </div>
+</div>
+
+<!-- Botón de carrito flotante (PC) -->
+<div class="cart-button">
+  <button onclick="mostrarCarrito()" style="background-color:#D6BA10; color:#242A0E; border:none; border-radius:8px; padding:12px 20px; font-size:16px; font-weight:bold; display:flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+    🛒 Ver Pedido
+    <span id="badge" style="background:#242A0E; color:#D6BA10; border-radius:50%; padding:2px 8px; font-size:14px; display:none;">0</span>
+  </button>
+</div>
+
+<!-- Botón flotante para móvil -->
+<button onclick="mostrarCarrito()" class="floating-mobile-button">
+  🛒
+  <span id="badge-mobile" style="position:absolute; top:-5px; right:-5px; background:#242A0E; color:#D6BA10; border-radius:50%; padding:2px 6px; font-size:12px; display:none;"></span>
+</button>
+
+<!-- Contenedor principal -->
+<div class="container">
+  <!-- Lista de productos -->
+  <div id="product-list"></div>
+
+  <!-- Carrito -->
+  <div id="cart">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #97E4FF; padding-bottom:10px;">
+      <h3 style="margin:0; color:#242A0E; font-size:20px;">🛒 Mi Pedido</h3>
+      <button onclick="document.getElementById('cart').style.display='none'" style="background:none; border:none; font-size:22px; cursor:pointer; color:#61BCC1;">×</button>
+    </div>
+    
+    <!-- Botón REGISTRAR VENTA INTERNA movido hasta arriba -->
+    <button onclick="openSaleModal()" style="width:100%; padding:15px; background-color:#242A0E; color:white; border:none; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer; margin-bottom:15px;">
+      💰 Registrar Venta Interna
+    </button>
+    
+    <div id="cart-items" style="margin-bottom:15px; padding-bottom:15px;"></div>
+    
+    <div style="background:#f8f8f8; padding:15px; border-radius:8px; margin-bottom:20px;">
+      <label for="zona" style="display:block; margin-bottom:8px; font-size:14px; color:#242A0E;">Zona de envío:</label>
+      <select id="zona" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #97E4FF; border-radius:6px; font-size:14px;">
+        <option value="" selected disabled>Seleccioná tu zona</option>
+        <option value="25">Zona 1 a 15 - Q25.00</option>
+        <option value="30">Zona 16 a 25 - Q30.00</option>
+        <option value="35">Municipios aledaños - Q35.00</option>
+        <option value="45">Departamentos - Q45.00</option>
+      </select>
+      
+      <input type="text" id="contacto" placeholder="📱 Tu WhatsApp" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #97E4FF; border-radius:6px; font-size:14px;">
+    </div>
+    
+    <div style="background:#242A0E; padding:12px; border-radius:8px; margin-bottom:15px;">
+      <p style="margin:0; text-align:right; font-weight:bold; font-size:18px; color:#D6BA10;">
+        Subtotal: <span style="color:white;">Q<span id="subtotal">0</span></span><br>
+        Envío: <span style="color:white;">Q<span id="monto-envio">0</span></span><br>
+        Total: <span style="color:white;">Q<span id="total">0</span></span>
+      </p>
+    </div>
+    
+    <!-- Botón ENVIAR VENTA POR WHATSAPP eliminado según solicitud -->
+  </div>
+</div>
+
+<script>
+// Configuración
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQreC6dhJKBy7DRW7z0cajVrXlHmKccbbAg4Q3LPbI5tKtlaasbFXBfhfOMTbeudrwLBrRC-XpGNIPG/pub?output=csv";
+const imagenDefault = "https://i.postimg.cc/CMPKPwMD/logo-2.jpg";
+// Contraseña para acceso (en un caso real, esto debería ser más seguro)
+const PASSWORD = "152379"; 
+let carrito = [];
+let productos = [];
+let productosFiltrados = [];
+let categoriasUnicas = new Set();
+
+// Funciones principales
+async function fetchData() {
+  try {
+    const res = await fetch(csvUrl);
+    const text = await res.text();
+    const rows = text.split("\n").slice(1);
+    
+    return rows.map(row => {
+      const columns = row.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+      
+      // Validar que tenga suficientes columnas
+      if (columns.length < 8) { // Asegurarnos que hay al menos 8 columnas (A-H)
+        console.warn('Fila incompleta:', row);
+        return null;
+      }
+      
+      // Procesar stock (columna G)
+      const stockValue = columns[6]?.replace(/"/g, "").trim();
+      const stock = stockValue ? parseInt(stockValue) : 0;
+      
+      // Procesar costo (ahora de la columna H - índice 7)
+      const costoValue = columns[7]?.replace(/"/g, "").trim();
+      const costo = costoValue ? parseFloat(costoValue) : 0;
+      
+      return {
+        nombre: columns[0]?.replace(/"/g, "").trim() || "Sin nombre",
+        precio: parseFloat(columns[2]?.replace(/"/g, "").trim()) || 0,
+        costo: isNaN(costo) ? 0 : costo, // Costo ahora viene de columna H
+        categoria: columns[4]?.replace(/"/g, "").trim(),
+        imagen: columns[5]?.replace(/"/g, "").trim() || imagenDefault,
+        stock: isNaN(stock) ? 0 : Math.max(0, stock) // Asegurar número positivo
+      };
+    }).filter(item => item !== null); // Filtrar filas inválidas
+  } catch (error) {
+    console.error("Error al cargar datos:", error);
+    return [];
+  }
+}
+
+function llenarFiltroCategorias() {
+  const select = document.getElementById("filtro-categoria");
+  select.innerHTML = '<option value="">Todas las categorías</option>';
+  
+  Array.from(categoriasUnicas).sort().forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    select.appendChild(option);
+  });
+}
+
+async function renderProducts(products) {
+  const container = document.getElementById("product-list");
+  container.innerHTML = "";
+  
+  // Filtrar solo productos con stock > 0
+  productosFiltrados = products.filter(p => p.stock > 0);
+  
+  if (productosFiltrados.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:40px; color:#242A0E;">
+        <p>No hay productos disponibles con los filtros actuales</p>
+        <small>Intenta con otra búsqueda o revisa más tarde</small>
+      </div>
+    `;
+    return;
+  }
+  
+  productosFiltrados.forEach((p, i) => {
+    const div = document.createElement("div");
+    div.className = "product-item";
+    
+    // Mostrar alerta de bajo stock - ahora muestra "Últimas unidades" cuando hay menos de 5
+    const stockAlert = p.stock < 5 ? 
+      `<span class="low-stock">ÚLTIMAS UNIDADES</span>` : '';
+    
+    div.innerHTML = `
+      <img src="${p.imagen}" class="product-image" alt="${p.nombre}" 
+           onerror="this.src='${imagenDefault}'">
+      <div class="product-info">
+        <div style="display:flex; align-items:center; flex-wrap:wrap;">
+          <div class="product-name">${p.nombre}</div>
+          ${stockAlert}
+        </div>
+        ${p.categoria ? `<div class="product-category" data-price="${p.precio.toFixed(2)}">${p.categoria}</div>` : ''}
+      </div>
+      <div class="product-price">Q${p.precio.toFixed(2)}</div>
+      <button class="add-button" onclick="agregarAlCarritoFiltrado(${i})">
+        + Agregar
+      </button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// Funciones del carrito - CORREGIDAS PARA FILTROS
+function agregarAlCarritoFiltrado(indexFiltrado) {
+  const productoFiltrado = productosFiltrados[indexFiltrado];
+  
+  // Buscar en la lista completa por coincidencia exacta
+  const productoOriginal = productos.find(p => 
+    p.nombre === productoFiltrado.nombre && 
+    p.precio === productoFiltrado.precio &&
+    p.categoria === productoFiltrado.categoria
+  );
+  
+  if (productoOriginal) {
+    agregarAlCarrito(productos.indexOf(productoOriginal));
+  } else {
+    // Fallback seguro
+    agregarAlCarritoDirecto(productoFiltrado);
+  }
+}
+
+function agregarAlCarrito(index) {
+  const producto = productos[index];
+  
+  if (producto.stock <= 0) {
+    alert("⚠️ Este producto no tiene stock disponible");
+    return;
+  }
+
+  const existente = carrito.find(p => p.nombre === producto.nombre);
+  
+  if (existente) {
+    if (existente.cantidad >= producto.stock) {
+      alert(`⚠️ No hay suficiente stock. Máximo disponible: ${producto.stock}`);
+      return;
+    }
+    existente.cantidad++;
+  } else {
+    carrito.push({...producto, cantidad: 1});
+  }
+  
+  actualizarCarrito();
+  animarBadge();
+}
+
+function agregarAlCarritoDirecto(producto) {
+  if (producto.stock <= 0) {
+    alert("⚠️ Este producto no tiene stock disponible");
+    return;
+  }
+
+  const existente = carrito.find(p => p.nombre === producto.nombre);
+  
+  if (existente) {
+    if (existente.cantidad >= producto.stock) {
+      alert(`⚠️ No hay suficiente stock. Máximo disponible: ${producto.stock}`);
+      return;
+    }
+    existente.cantidad++;
+  } else {
+    carrito.push({...producto, cantidad: 1});
+  }
+  
+  actualizarCarrito();
+  animarBadge();
+}
+
+function animarBadge() {
+  document.getElementById("badge").style.animation = "pulse 0.5s";
+  document.getElementById("badge-mobile").style.animation = "pulse 0.5s";
+  setTimeout(() => {
+    document.getElementById("badge").style.animation = "";
+    document.getElementById("badge-mobile").style.animation = "";
+  }, 500);
+}
+
+function mostrarCarrito() {
+  const cart = document.getElementById("cart");
+  if (window.innerWidth <= 768) {
+    cart.style.top = "50%";
+    cart.style.transform = "translate(-50%, -50%)";
+  } else {
+    cart.style.top = "100px";
+    cart.style.transform = "translateX(-50%)";
+  }
+  cart.style.display = "block";
+  actualizarCarrito();
+}
+
+function actualizarCarrito() {
+  const contenedor = document.getElementById("cart-items");
+  contenedor.innerHTML = "";
+  let totalCantidad = 0;
+  let subtotal = 0;
+  
+  if (carrito.length === 0) {
+    contenedor.innerHTML = `
+      <div style="text-align:center; padding:20px; color:#666;">
+        <p>Tu carrito está vacío</p>
+      </div>
+    `;
+  } else {
+    carrito.forEach((item, i) => {
+      totalCantidad += item.cantidad;
+      subtotal += item.precio * item.cantidad;
+      
+      const div = document.createElement("div");
+      div.style.marginBottom = "15px";
+      div.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="${item.imagen}" class="cart-item-image" alt="${item.nombre}" 
+               onerror="this.src='${imagenDefault}'">
+          <div style="flex-grow:1;">
+            <p style="margin:0 0 5px 0; font-weight:bold; color:#333;">${item.nombre}</p>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div style="display:flex; align-items:center;">
+                <button onclick="cambiarCantidad(${i}, -1)" style="width:25px; height:25px; border:1px solid #ddd; background:#f9f9f9; border-radius:4px; cursor:pointer;">−</button>
+                <span style="margin:0 10px; font-weight:bold;">${item.cantidad}</span>
+                <button onclick="cambiarCantidad(${i}, 1)" style="width:25px; height:25px; border:1px solid #ddd; background:#f9f9f9; border-radius:4px; cursor:pointer;">+</button>
+              </div>
+              <span style="font-weight:bold; color:#25D366;">Q${(item.precio * item.cantidad).toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+      contenedor.appendChild(div);
+    });
+  }
+  
+  const envio = parseFloat(document.getElementById("zona").value) || 0;
+  document.getElementById("subtotal").innerText = subtotal.toFixed(2);
+  document.getElementById("monto-envio").innerText = envio.toFixed(2);
+  document.getElementById("total").innerText = (subtotal + envio).toFixed(2);
+  
+  // Actualizar badges
+  const badge = document.getElementById("badge");
+  const badgeMobile = document.getElementById("badge-mobile");
+  badge.style.display = totalCantidad > 0 ? "inline-block" : "none";
+  badgeMobile.style.display = totalCantidad > 0 ? "inline-block" : "none";
+  badge.innerText = totalCantidad;
+  badgeMobile.innerText = totalCantidad;
+}
+
+function cambiarCantidad(index, cambio) {
+  const item = carrito[index];
+  const productoOriginal = productos.find(p => p.nombre === item.nombre);
+  
+  if (productoOriginal) {
+    const nuevaCantidad = item.cantidad + cambio;
+    
+    if (nuevaCantidad <= 0) {
+      carrito.splice(index, 1);
+    } else if (nuevaCantidad > productoOriginal.stock) {
+      alert(`⚠️ No hay suficiente stock. Máximo disponible: ${productoOriginal.stock}`);
+      return;
+    } else {
+      item.cantidad = nuevaCantidad;
+    }
+  } else {
+    // Para productos no encontrados en la lista original
+    if (item.cantidad + cambio <= 0) {
+      carrito.splice(index, 1);
+    } else {
+      item.cantidad += cambio;
+    }
+  }
+  
+  actualizarCarrito();
+}
+
+// Validación y envío
+function validarDatos() {
+  let valido = true;
+  const contacto = document.getElementById("contacto").value.trim();
+  const zona = document.getElementById("zona").value;
+
+  if (!contacto) {
+    document.getElementById("contacto").classList.add("error-input");
+    valido = false;
+  }
+
+  if (!zona) {
+    document.getElementById("zona").classList.add("error-input");
+    valido = false;
+  }
+
+  if (!valido) {
+    alert("⚠️ Completá los campos marcados en rojo");
+    return false;
+  }
+  return true;
+}
+
+function resetearErrores() {
+  document.getElementById("contacto").classList.remove("error-input");
+  document.getElementById("zona").classList.remove("error-input");
+}
+
+function enviarPedido() {
+  resetearErrores();
+  if (!validarDatos()) return;
+
+  const contacto = document.getElementById("contacto").value.trim();
+  const zonaEl = document.getElementById("zona");
+  const envio = parseFloat(zonaEl.value) || 0;
+  const zonaTexto = zonaEl.options[zonaEl.selectedIndex]?.text || "";
+
+  // Crear mensaje para WhatsApp
+  let mensaje = `¡Hola! Quiero hacer este pedido:\n\n📱 Contacto: ${contacto}\n📍 ${zonaTexto}\n\n🛒 Productos:\n`;
+  
+  carrito.forEach(item => {
+    mensaje += `➡ ${item.cantidad}x ${item.nombre} - Q${(item.precio * item.cantidad).toFixed(2)}\n`;
+  });
+  
+  mensaje += `\n💸 Subtotal: Q${carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0).toFixed(2)}`;
+  mensaje += `\n🚚 Envío: Q${envio.toFixed(2)}`;
+  mensaje += `\n💰 TOTAL: Q${(carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0) + envio).toFixed(2)}`;
+  
+  // Abrir WhatsApp
+  window.open(`https://wa.me/50230999636?text=${encodeURIComponent(mensaje)}`, "_blank");
+  
+  // Notificación al administrador
+  notificarAdmin(contacto, zonaTexto);
+}
+
+function notificarAdmin(telefono, zona) {
+  const productosTexto = carrito.map(item => 
+    `• ${item.cantidad}x ${item.nombre} - Q${(item.precio * item.cantidad).toFixed(2)}`
+  ).join('\n');
+
+  fetch('https://formsubmit.co/ajax/chepinesgt@gmail.com', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      name: "Nuevo pedido en tienda",
+      message: `📞 Teléfono: ${telefono}\n📍 Zona: ${zona}\n\n🛒 PRODUCTOS:\n${productosTexto}\n\n💸 TOTAL: Q${document.getElementById("total").innerText}`,
+      _subject: `Nuevo pedido de ${telefono}`,
+      _replyto: "no-reply@tienda.com"
+    })
+  })
+  .then(response => response.json())
+  .then(data => console.log("Notificación enviada"))
+  .catch(error => console.error("Error:", error));
+}
+
+// Filtrado
+function filtrarProductos() {
+  const texto = document.getElementById("search").value.toLowerCase();
+  const categoria = document.getElementById("filtro-categoria").value;
+  
+  productosFiltrados = productos.filter(p => {
+    const coincideTexto = (p.nombre + " " + (p.categoria || '')).toLowerCase().includes(texto);
+    const coincideCategoria = !categoria || p.categoria === categoria;
+    const tieneStock = p.stock > 0;
+    return coincideTexto && coincideCategoria && tieneStock;
+  });
+  
+  renderProducts(productosFiltrados);
+}
+
+// Funciones para el registro de ventas internas
+function openSaleModal() {
+  if (carrito.length === 0) {
+    alert("⚠️ El carrito está vacío");
+    return;
+  }
+  document.getElementById("saleModal").style.display = "flex";
+  document.getElementById("salePrice").value = "";
+  document.getElementById("shippingCost").value = "";
+  document.getElementById("saleResult").style.display = "none";
+  
+  // Mostrar campos de entrada
+  document.getElementById("salePrice").style.display = "block";
+  document.getElementById("shippingCost").style.display = "block";
+  document.querySelector("#saleModal .modal-button").style.display = "block";
+  document.querySelector("#saleModal .modal-button.secondary").style.display = "block";
+}
+
+function closeSaleModal() {
+  // Restaurar los elementos ocultos
+  document.getElementById("salePrice").style.display = "block";
+  document.getElementById("shippingCost").style.display = "block";
+  document.querySelector("#saleModal .modal-button").style.display = "block";
+  document.querySelector("#saleModal .modal-button.secondary").style.display = "block";
+  
+  // Limpiar carrito si se mostró el resumen
+  if (document.getElementById("saleResult").style.display === "block") {
+    carrito = [];
+    actualizarCarrito();
+  }
+  
+  // Cerrar modal
+  document.getElementById("saleModal").style.display = "none";
+  document.getElementById("saleResult").style.display = "none";
+}
+
+function registerSale() {
+  const salePrice = parseFloat(document.getElementById("salePrice").value);
+  const shippingCost = parseFloat(document.getElementById("shippingCost").value) || 0;
+  
+  if (isNaN(salePrice) || salePrice <= 0) {
+    alert("⚠️ Ingrese un precio de venta válido");
+    return;
+  }
+  
+  // Calcular costo total de productos (usando la columna H - costo)
+  const productCost = carrito.reduce((sum, item) => {
+    // Verificar que el costo existe, si no, usar 0
+    const costo = item.costo !== undefined ? item.costo : 0;
+    return sum + (costo * item.cantidad);
+  }, 0);
+  
+  const profit = salePrice - productCost - shippingCost;
+  
+  // Mostrar resumen
+  document.getElementById("soldItems").innerText = carrito.map(item => `${item.cantidad}x ${item.nombre}`).join(", ");
+  document.getElementById("displaySalePrice").innerText = salePrice.toFixed(2);
+  document.getElementById("displayProductCost").innerText = productCost.toFixed(2);
+  document.getElementById("displayShippingCost").innerText = shippingCost.toFixed(2);
+  document.getElementById("displayProfit").innerText = profit.toFixed(2);
+  
+  document.getElementById("saleResult").style.display = "block";
+  
+  // Ocultar los campos de entrada y botones
+  document.getElementById("salePrice").style.display = "none";
+  document.getElementById("shippingCost").style.display = "none";
+  document.querySelector("#saleModal .modal-button").style.display = "none";
+  document.querySelector("#saleModal .modal-button.secondary").style.display = "none";
+  
+  // Aquí deberías implementar la lógica para actualizar el stock en Google Sheets
+  console.log("Venta registrada - Actualizar stock:", carrito);
+}
+
+// Funciones para el sistema de contraseña
+function checkPassword() {
+  const password = document.getElementById("passwordInput").value;
+  if (password === PASSWORD) {
+    document.getElementById("passwordModal").style.display = "none";
+    document.getElementById("passwordError").style.display = "none";
+  } else {
+    document.getElementById("passwordError").style.display = "block";
+  }
+}
+
+// Inicialización
+document.addEventListener("DOMContentLoaded", async () => {
+  document.getElementById("passwordModal").style.display = "flex";
+  
+  try {
+    productos = await fetchData();
+    console.log('Productos cargados:', productos); // Para depuración
+    
+    // Solo categorías con productos en stock
+    productos.filter(p => p.stock > 0).forEach(p => {
+      if (p.categoria) categoriasUnicas.add(p.categoria);
+    });
+    
+    llenarFiltroCategorias();
+    renderProducts(productos);
+    
+    // Event listeners
+    document.getElementById("search").addEventListener("input", filtrarProductos);
+    document.getElementById("filtro-categoria").addEventListener("change", filtrarProductos);
+    document.getElementById("zona").addEventListener("change", actualizarCarrito);
+    
+    document.getElementById("contacto").addEventListener("input", function() {
+      this.classList.remove("error-input");
+    });
+    
+    document.getElementById("zona").addEventListener("change", function() {
+      this.classList.remove("error-input");
+    });
+    
+  } catch (error) {
+    console.error("Error:", error);
+    document.getElementById("product-list").innerHTML = `
+      <div style="text-align:center; padding:40px; color:#D6BA10;">
+        <p style="font-size:16px;">⚠️ Error al cargar productos</p>
+        ${error.message ? `<small>${error.message}</small>` : ''}
+      </div>
+    `;
+  }
+});
+
+// Función para actualizar el stock en Google Sheets (ejemplo)
+async function updateStockInGoogleSheets(itemsSold) {
+  try {
+    // Aquí iría la lógica para conectar con Google Sheets API
+    console.log("Actualizando stock para:", itemsSold);
+    
+    // Ejemplo de cómo podrías estructurar los datos para enviar
+    const updates = itemsSold.map(item => ({
+      productName: item.nombre,
+      quantitySold: item.cantidad
+    }));
+    
+    // En un caso real, harías una llamada a tu backend o a la API de Google Sheets
+    // await fetch('tu-endpoint-para-actualizar-stock', { 
+    //   method: 'POST', 
+    //   body: JSON.stringify(updates) 
+    // });
+    
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar stock:", error);
+    return false;
+  }
+}
+
+// Función para registrar la venta en un historial (ejemplo)
+async function registerSaleInHistory(saleData) {
+  try {
+    // Aquí iría la lógica para guardar el registro de la venta
+    console.log("Registrando venta en historial:", saleData);
+    
+    // await fetch('tu-endpoint-para-registrar-venta', { 
+    //   method: 'POST', 
+    //   body: JSON.stringify(saleData) 
+    // });
+    
+    return true;
+  } catch (error) {
+    console.error("Error al registrar venta:", error);
+    return false;
+  }
+}
+</script>
+</body>
+</html>
